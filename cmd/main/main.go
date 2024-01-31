@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"golang.org/x/time/rate"
 	"io"
 	"log"
 	"net/http"
@@ -87,6 +88,18 @@ func DrainAndCloseRequestBody(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), "body", body)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+func RateLimiterMiddleware(limiter *rate.Limiter) mux.MiddlewareFunc {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if !limiter.Allow() {
+				http.Error(w, http.StatusText(http.StatusTooManyRequests), http.StatusTooManyRequests)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
 }
 
 type LoggingResponseWriter struct {
@@ -173,7 +186,9 @@ func main() {
 
 	authAPI := auth.NewAuthAPI("admin", password, []byte(jwtKey))
 
+	limiter := rate.NewLimiter(100, 200)
 	r := mux.NewRouter()
+	r.Use(RateLimiterMiddleware(limiter))
 	r.Use(DrainAndCloseRequestBody)
 
 	corsOptions := handlers.CORS(
