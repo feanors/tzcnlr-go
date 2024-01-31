@@ -116,7 +116,7 @@ func ErrorLoggingMiddleware(next http.Handler) http.Handler {
 		lrw := &LoggingResponseWriter{ResponseWriter: w}
 		next.ServeHTTP(lrw, r)
 
-		if lrw.statusCode >= 400 {
+		if lrw.statusCode != 401 && lrw.statusCode >= 400 {
 			log.Printf("HTTP Error %d: %s || Header: %s || Request Body :%s\n", lrw.statusCode, lrw.body.String(), r.URL, string(body))
 		}
 	})
