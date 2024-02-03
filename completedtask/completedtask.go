@@ -54,7 +54,7 @@ func (s *CompletedTaskService) PutCompletedTask(ct CompletedTask) error {
 
 func (s *CompletedTaskService) ValidateCompletedTaskData(ct CompletedTask) error {
 	if !ct.TaskEndDate.IsZero() && ct.TaskStartDate.After(ct.TaskEndDate) {
-		return errors.New("task start date cant be before than task end date")
+		return errors.New("task start date before task end date")
 	}
 	if !ct.TaskEndTime.IsZero() && !ct.TaskEndTime.Equal(ct.TaskStartTime.Add(time.Minute*time.Duration(ct.TaskDurationInMinutes))) {
 		return errors.New("task end time does not match task start time + duration in minutes")
