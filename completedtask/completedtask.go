@@ -27,7 +27,7 @@ func (ct *CompletedTask) String() string {
 
 func (ct *CompletedTask) FillDerivedCompletedTaskData() {
 	if ct.TaskEndDate.IsZero() {
-		ct.TaskEndDate = ct.TaskStartDate.Add(time.Minute * time.Duration(ct.TaskDurationInMinutes))
+		ct.TaskEndDate = time.Date(ct.TaskStartDate.Year(), ct.TaskStartDate.Month(), ct.TaskStartDate.Day(), ct.TaskStartTime.Hour(), ct.TaskStartTime.Minute(), ct.TaskStartTime.Second(), ct.TaskStartTime.Nanosecond(), ct.TaskStartTime.Location()).Add(time.Minute * time.Duration(ct.TaskDurationInMinutes))
 	}
 	if ct.TaskEndTime.IsZero() {
 		ct.TaskEndTime = ct.TaskStartTime.Add(time.Minute * time.Duration(ct.TaskDurationInMinutes))
@@ -53,8 +53,8 @@ func (s *CompletedTaskService) PutCompletedTask(ct CompletedTask) error {
 }
 
 func (s *CompletedTaskService) ValidateCompletedTaskData(ct CompletedTask) error {
-	if !ct.TaskEndDate.IsZero() && !ct.TaskStartDate.Equal(ct.TaskEndDate) {
-		return errors.New("task start date and end date must be same with the current config")
+	if !ct.TaskEndDate.IsZero() && ct.TaskStartDate.After(ct.TaskEndDate) {
+		return errors.New("task start date cant be before than task end date")
 	}
 	if !ct.TaskEndTime.IsZero() && !ct.TaskEndTime.Equal(ct.TaskStartTime.Add(time.Minute*time.Duration(ct.TaskDurationInMinutes))) {
 		return errors.New("task end time does not match task start time + duration in minutes")
